@@ -11,9 +11,12 @@ public class SearchAPIComponent : MonoBehaviour {
     private InputField searchInputField;
     [SerializeField]
     private SearchItemsListViewComponent searchList;
+    [SerializeField]
+    private GameObject loadingBarObject;
 
     void Awake() {
         this.searchButton.onClick.AddListener(SearchApi);
+        this.loadingBarObject.SetActive(false);
     }
 
     void Destroy() {
@@ -36,16 +39,18 @@ public class SearchAPIComponent : MonoBehaviour {
             Constants.API.QueryArgumentString + query;
 
         UnityWebRequest request = UnityWebRequest.Get(apiUrl);
+        loadingBarObject.SetActive(true);
+        searchList.Clear();
         yield return request.Send();
+        loadingBarObject.SetActive(false);
         if (request.isError) {
+            //TODO handle the case where there is an error fetching data
             Debug.Log(request.error);
         }
         else {
             SearchResult result = JsonUtility.FromJson<SearchResult>(request.downloadHandler.text);
+            //TODO handle the case when there are 0 results.
             searchList.Initialize(result.data);
-            //for (int i = 0; i < result.data.Length; i++) {
-            //    Debug.Log(result.data[i].Title);
-            //}
         }
     }
 }

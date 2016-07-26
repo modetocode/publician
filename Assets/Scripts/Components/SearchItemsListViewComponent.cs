@@ -16,6 +16,10 @@ public class SearchItemsListViewComponent : MonoBehaviour {
         this.UpdateViews();
     }
 
+    public void Clear() {
+        this.ClearViews();
+    }
+
     private void UpdateViews() {
         this.ClearViews();
         this.listViewItems = new ListItemViewComponent[listItems.Count];
