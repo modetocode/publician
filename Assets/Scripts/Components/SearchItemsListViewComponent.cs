@@ -1,6 +1,10 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Assertions;
 
+/// <summary>
+/// Responsible for displaying a list of search content items.
+/// </summary>
 public class SearchItemsListViewComponent : MonoBehaviour {
 
     [SerializeField]
@@ -8,37 +12,59 @@ public class SearchItemsListViewComponent : MonoBehaviour {
     [SerializeField]
     private Transform containerTransform;
 
-    private IList<IListItem> listItems;
+    private IList<IContentItem> listItems;
     private IList<ListItemViewComponent> listViewItems;
+    private IContentFetcher contentFetcher;
 
-    public void Initialize(IList<IListItem> listItems) {
-        this.listItems = listItems;
-        this.UpdateViews();
+    public void Initialize(IContentFetcher contentFetcher) {
+        Assert.IsNotNull(contentFetcher);
+        if (this.contentFetcher != null) {
+            this.UnsubsribeFromFetchingStarted();
+        }
+
+        this.contentFetcher = contentFetcher;
+        this.contentFetcher.ContentStartedFetching += OnContentStartedFetching;
     }
 
-    public void Clear() {
-        this.ClearViews();
-    }
-
-    private void UpdateViews() {
-        this.ClearViews();
-        this.listViewItems = new ListItemViewComponent[listItems.Count];
-        for (int i = 0; i < listItems.Count; i++) {
-            this.listViewItems[i] = GameObject.Instantiate(itemViewTemplate);
-            this.listViewItems[i].transform.SetParent(containerTransform, false);
-            this.listViewItems[i].Initialize(listItems[i]);
+    void Destroy() {
+        if (this.contentFetcher != null) {
+            this.UnsubsribeFromFetchingStarted();
         }
     }
 
-    private void ClearViews() {
+    private void OnContentStartedFetching() {
+        //TODO show progress bar
+        this.contentFetcher.ContentFetched += DisplayContent;
+    }
+
+    private void DisplayContent(IList<IContentItem> contentItems) {
+        this.contentFetcher.ContentFetched -= DisplayContent;
+        for (int i = 0; i < contentItems.Count; i++) {
+            this.AddContentItem(contentItems[i]);
+        }
+    }
+
+    private void AddContentItem(IContentItem contentItem) {
+        //TODO add object pool
+        ListItemViewComponent newViewObject = Instantiate(itemViewTemplate);
+        newViewObject.transform.SetParent(containerTransform, false);
+        newViewObject.Initialize(contentItem);
+
+        if (this.listItems == null) {
+            this.listItems = new List<IContentItem>();
+
+        }
+
+        this.listItems.Add(contentItem);
+
         if (this.listViewItems == null) {
-            return;
+            this.listViewItems = new List<ListItemViewComponent>();
         }
 
-        for (int i = 0; i < this.listViewItems.Count; i++) {
-            Destroy(this.listViewItems[i].gameObject);
-        }
+        this.listViewItems.Add(newViewObject);
+    }
 
-        this.listViewItems = null;
+    private void UnsubsribeFromFetchingStarted() {
+        this.contentFetcher.ContentStartedFetching -= OnContentStartedFetching;
     }
 }
