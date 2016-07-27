@@ -47,9 +47,13 @@ public class SearchItemsListViewComponent : MonoBehaviour {
         this.contentFetcher.ContentFetched += DisplayContent;
     }
 
-    private void DisplayContent(IList<IContentItem> contentItems) {
+    private void DisplayContent(IList<IContentItem> contentItems, ContentFetchedType contentFetchedType) {
         this.contentFetcher.ContentFetched -= DisplayContent;
         this.fetchingContentObject.SetActive(false);
+        if (contentFetchedType == ContentFetchedType.NewContent) {
+            this.RemoveAllContentItems();
+        }
+
         for (int i = 0; i < contentItems.Count; i++) {
             this.AddContentItem(contentItems[i]);
         }
@@ -73,6 +77,19 @@ public class SearchItemsListViewComponent : MonoBehaviour {
         }
 
         this.listViewItems.Add(newViewObject);
+    }
+
+    private void RemoveAllContentItems() {
+        if (this.listItems == null) {
+            return;
+        }
+
+        for (int i = 0; i < this.listViewItems.Count; i++) {
+            Destroy(this.listViewItems[i].gameObject);
+        }
+
+        this.listViewItems.Clear();
+        this.listItems.Clear();
     }
 
     private void UnsubsribeFromFetchingStarted() {

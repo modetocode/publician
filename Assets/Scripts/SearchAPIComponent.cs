@@ -17,8 +17,10 @@ public class SearchAPIComponent : ContentUpdater, IContentFetcher {
     private InputField searchInputField;
     [SerializeField]
     private SearchItemsListViewComponent searchList;
+    [SerializeField]
+    private Text searchInfoTextLabel;
 
-    public event Action<IList<IContentItem>> ContentFetched;
+    public event Action<IList<IContentItem>, ContentFetchedType> ContentFetched;
     public event Action ContentStartedFetching;
 
     private string queryString = String.Empty;
@@ -28,6 +30,7 @@ public class SearchAPIComponent : ContentUpdater, IContentFetcher {
         Assert.IsNotNull(this.searchButton);
         Assert.IsNotNull(this.searchInputField);
         Assert.IsNotNull(this.searchList);
+        Assert.IsNotNull(this.searchInfoTextLabel);
         this.searchButton.onClick.AddListener(SearchApi);
         this.searchList.Initialize(this);
     }
@@ -47,17 +50,13 @@ public class SearchAPIComponent : ContentUpdater, IContentFetcher {
             return;
         }
 
-        this.StartCoroutine(FetchContentCoroutine());
+        this.StartCoroutine(FetchContentCoroutine(isNewSearch: true));
     }
 
-
-    public void FetchContent() {
-        this.StartCoroutine(FetchContentCoroutine());
-    }
-
-    private IEnumerator FetchContentCoroutine() {
+    private IEnumerator FetchContentCoroutine(bool isNewSearch) {
         int offsetValue = 0;
-        if (previousSearchResult != null) {
+        if (!isNewSearch) {
+            Assert.IsNotNull(this.previousSearchResult);
             offsetValue = previousSearchResult.MetaData.Offset + Constants.Search.NumberOfItemsPerPage;
         }
 
@@ -73,16 +72,19 @@ public class SearchAPIComponent : ContentUpdater, IContentFetcher {
         UnityWebRequest request = UnityWebRequest.Get(apiUrl);
         yield return request.Send();
         if (request.isError) {
-            //TODO handle the case where there is an error fetching data
-            Debug.Log(request.error);
+            this.searchInfoTextLabel.text = Constants.Strings.FetchingContentFailedMessage;
         }
         else {
             SearchResult result = JsonUtility.FromJson<SearchResult>(request.downloadHandler.text);
             if (this.ContentFetched != null) {
-                this.ContentFetched(result.SearchData);
+                ContentFetchedType fetchedType = isNewSearch ? ContentFetchedType.NewContent : ContentFetchedType.UpdatedContent;
+                this.ContentFetched(result.SearchData, fetchedType);
             }
 
             this.previousSearchResult = result;
+            if (isNewSearch) {
+                this.searchInfoTextLabel.text = string.Format(Constants.Strings.SearchInfoStringTemplate, result.MetaData.Count, this.queryString);
+            }
         }
     }
 
@@ -91,6 +93,6 @@ public class SearchAPIComponent : ContentUpdater, IContentFetcher {
             return;
         }
 
-        this.StartCoroutine(FetchContentCoroutine());
+        this.StartCoroutine(FetchContentCoroutine(isNewSearch: false));
     }
 }

@@ -16,4 +16,9 @@ public static class Constants {
     public static class Math {
         public const float FloatPositiveEpsilon = 0.00001f;
     }
+
+    public static class Strings {
+        public const string SearchInfoStringTemplate = "Total results: {0} for \"{1}\"";
+        public const string FetchingContentFailedMessage = "Fetching content failed.";
+    }
 }

@@ -6,8 +6,7 @@ using System.Collections.Generic;
 /// </summary>
 public interface IContentFetcher {
 
-    void FetchContent();
     event Action ContentStartedFetching;
-    event Action<IList<IContentItem>> ContentFetched;
+    event Action<IList<IContentItem>, ContentFetchedType> ContentFetched;
 
 }
