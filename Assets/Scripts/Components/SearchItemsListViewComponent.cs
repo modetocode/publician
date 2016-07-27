@@ -11,6 +11,8 @@ public class SearchItemsListViewComponent : MonoBehaviour {
     private SearchItemViewComponent itemViewTemplate;
     [SerializeField]
     private Transform containerTransform;
+    [SerializeField]
+    private GameObject fetchingContentObject;
 
     private IList<IContentItem> listItems;
     private IList<ListItemViewComponent> listViewItems;
@@ -26,6 +28,13 @@ public class SearchItemsListViewComponent : MonoBehaviour {
         this.contentFetcher.ContentStartedFetching += OnContentStartedFetching;
     }
 
+    void Awake() {
+        Assert.IsNotNull(this.itemViewTemplate);
+        Assert.IsNotNull(this.containerTransform);
+        Assert.IsNotNull(this.fetchingContentObject);
+        this.fetchingContentObject.SetActive(false);
+    }
+
     void Destroy() {
         if (this.contentFetcher != null) {
             this.UnsubsribeFromFetchingStarted();
@@ -33,12 +42,14 @@ public class SearchItemsListViewComponent : MonoBehaviour {
     }
 
     private void OnContentStartedFetching() {
-        //TODO show progress bar
+        this.fetchingContentObject.transform.SetAsLastSibling();
+        this.fetchingContentObject.SetActive(true);
         this.contentFetcher.ContentFetched += DisplayContent;
     }
 
     private void DisplayContent(IList<IContentItem> contentItems) {
         this.contentFetcher.ContentFetched -= DisplayContent;
+        this.fetchingContentObject.SetActive(false);
         for (int i = 0; i < contentItems.Count; i++) {
             this.AddContentItem(contentItems[i]);
         }
