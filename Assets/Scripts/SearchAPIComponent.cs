@@ -41,12 +41,7 @@ public class SearchAPIComponent : ContentUpdater, IContentFetcher {
     }
 
     private void SearchApi() {
-        string newQueryString = searchInputField.text;
-        if (newQueryString.Equals(this.queryString)) {
-            return;
-        }
-
-        this.queryString = newQueryString;
+        this.queryString = searchInputField.text;
         if (this.queryString.Equals(string.Empty)) {
             return;
         }

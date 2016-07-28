@@ -17,6 +17,7 @@ public class SearchItemsListViewComponent : MonoBehaviour {
     private IList<IContentItem> listItems;
     private IList<ListItemViewComponent> listViewItems;
     private IContentFetcher contentFetcher;
+    private SimplePool<ListItemViewComponent> itemViewPool;
 
     public void Initialize(IContentFetcher contentFetcher) {
         Assert.IsNotNull(contentFetcher);
@@ -33,6 +34,7 @@ public class SearchItemsListViewComponent : MonoBehaviour {
         Assert.IsNotNull(this.containerTransform);
         Assert.IsNotNull(this.fetchingContentObject);
         this.fetchingContentObject.SetActive(false);
+        this.itemViewPool = new SimplePool<ListItemViewComponent>(InstantiateItemView, Constants.Search.NumberOfItemsPerPage);
     }
 
     void Destroy() {
@@ -60,9 +62,8 @@ public class SearchItemsListViewComponent : MonoBehaviour {
     }
 
     private void AddContentItem(IContentItem contentItem) {
-        //TODO add object pool
-        ListItemViewComponent newViewObject = Instantiate(itemViewTemplate);
-        newViewObject.transform.SetParent(containerTransform, false);
+        ListItemViewComponent newViewObject = this.itemViewPool.Fetch();
+        newViewObject.gameObject.SetActive(true);
         newViewObject.Initialize(contentItem);
 
         if (this.listItems == null) {
@@ -85,7 +86,7 @@ public class SearchItemsListViewComponent : MonoBehaviour {
         }
 
         for (int i = 0; i < this.listViewItems.Count; i++) {
-            Destroy(this.listViewItems[i].gameObject);
+            this.ReturnItemViewToPool(this.listViewItems[i]);
         }
 
         this.listViewItems.Clear();
@@ -94,5 +95,17 @@ public class SearchItemsListViewComponent : MonoBehaviour {
 
     private void UnsubsribeFromFetchingStarted() {
         this.contentFetcher.ContentStartedFetching -= OnContentStartedFetching;
+    }
+
+    private ListItemViewComponent InstantiateItemView() {
+        ListItemViewComponent newViewObject = Instantiate(itemViewTemplate);
+        newViewObject.gameObject.SetActive(false);
+        newViewObject.transform.SetParent(containerTransform, false);
+        return newViewObject;
+    }
+
+    private void ReturnItemViewToPool(ListItemViewComponent itemView) {
+        itemView.gameObject.SetActive(false);
+        this.itemViewPool.Release(itemView);
     }
 }
