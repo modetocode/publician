@@ -78,19 +78,23 @@ public class SearchAPIComponent : ContentUpdater, IContentFetcher {
         this.isFetchingInProgress = true;
         yield return request.Send();
         this.isFetchingInProgress = false;
+        string searchInfoMessage;
+        IList<IContentItem> contentItems;
         if (request.isError) {
-            this.searchInfoTextLabel.text = Constants.Strings.FetchingContentFailedMessage;
+            searchInfoMessage = Constants.Strings.FetchingContentFailedMessage;
+            contentItems = new IContentItem[0];
+
         }
         else {
             SearchResult result = JsonUtility.FromJson<SearchResult>(request.downloadHandler.text);
-            if (this.ContentFetched != null) {
-                this.ContentFetched(result.SearchData);
-            }
-
+            searchInfoMessage = string.Format(Constants.Strings.SearchInfoStringTemplate, result.MetaData.Count, this.queryString);
+            contentItems = result.SearchData;
             this.previousSearchResult = result;
-            if (isNewSearch) {
-                this.searchInfoTextLabel.text = string.Format(Constants.Strings.SearchInfoStringTemplate, result.MetaData.Count, this.queryString);
-            }
+        }
+
+        this.searchInfoTextLabel.text = searchInfoMessage;
+        if (this.ContentFetched != null) {
+            this.ContentFetched(contentItems);
         }
     }
 
