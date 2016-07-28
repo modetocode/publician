@@ -41,19 +41,19 @@ public class SearchItemsListViewComponent : MonoBehaviour {
         }
     }
 
-    private void OnContentStartedFetching() {
+    private void OnContentStartedFetching(ContentFetchingType contentFetchedType) {
+        if (contentFetchedType == ContentFetchingType.NewContent) {
+            this.RemoveAllContentItems();
+        }
+
         this.fetchingContentObject.transform.SetAsLastSibling();
         this.fetchingContentObject.SetActive(true);
         this.contentFetcher.ContentFetched += DisplayContent;
     }
 
-    private void DisplayContent(IList<IContentItem> contentItems, ContentFetchedType contentFetchedType) {
+    private void DisplayContent(IList<IContentItem> contentItems) {
         this.contentFetcher.ContentFetched -= DisplayContent;
         this.fetchingContentObject.SetActive(false);
-        if (contentFetchedType == ContentFetchedType.NewContent) {
-            this.RemoveAllContentItems();
-        }
-
         for (int i = 0; i < contentItems.Count; i++) {
             this.AddContentItem(contentItems[i]);
         }

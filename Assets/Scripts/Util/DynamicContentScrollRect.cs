@@ -9,6 +9,7 @@ public class DynamicContentScrollRect : ScrollRect {
 
     [SerializeField]
     private ContentUpdater contentUpdater;
+    private Vector2 previousScrollingPosition;
 
     public ContentUpdater ContentUpdater {
         get { return this.contentUpdater; }
@@ -22,10 +23,11 @@ public class DynamicContentScrollRect : ScrollRect {
     }
 
     private void TrackScrollingProgress(Vector2 position) {
-        if (IsEndOfContentReached(position)) {
-            Debug.Log("Update content");
+        if (IsEndOfContentReached(position) && !IsEndOfContentReached(this.previousScrollingPosition)) {
             this.contentUpdater.UpdateContent();
         }
+
+        this.previousScrollingPosition = position;
     }
 
     private bool IsEndOfContentReached(Vector2 position) {

@@ -20,11 +20,12 @@ public class SearchAPIComponent : ContentUpdater, IContentFetcher {
     [SerializeField]
     private Text searchInfoTextLabel;
 
-    public event Action<IList<IContentItem>, ContentFetchedType> ContentFetched;
-    public event Action ContentStartedFetching;
+    public event Action<IList<IContentItem>> ContentFetched;
+    public event Action<ContentFetchingType> ContentStartedFetching;
 
     private string queryString = String.Empty;
     private SearchResult previousSearchResult;
+    private bool isFetchingInProgress;
 
     void Awake() {
         Assert.IsNotNull(this.searchButton);
@@ -58,6 +59,9 @@ public class SearchAPIComponent : ContentUpdater, IContentFetcher {
         if (!isNewSearch) {
             Assert.IsNotNull(this.previousSearchResult);
             offsetValue = previousSearchResult.MetaData.Offset + Constants.Search.NumberOfItemsPerPage;
+            if (offsetValue >= previousSearchResult.MetaData.Count) {
+                yield break;
+            }
         }
 
         string apiUrl =
@@ -66,19 +70,21 @@ public class SearchAPIComponent : ContentUpdater, IContentFetcher {
            Constants.API.QueryArgumentString + queryString +
            Constants.API.OffsetArgumentString + offsetValue;
         if (this.ContentStartedFetching != null) {
-            this.ContentStartedFetching();
+            ContentFetchingType fetchingType = isNewSearch ? ContentFetchingType.NewContent : ContentFetchingType.UpdatedContent;
+            this.ContentStartedFetching(fetchingType);
         }
 
         UnityWebRequest request = UnityWebRequest.Get(apiUrl);
+        this.isFetchingInProgress = true;
         yield return request.Send();
+        this.isFetchingInProgress = false;
         if (request.isError) {
             this.searchInfoTextLabel.text = Constants.Strings.FetchingContentFailedMessage;
         }
         else {
             SearchResult result = JsonUtility.FromJson<SearchResult>(request.downloadHandler.text);
             if (this.ContentFetched != null) {
-                ContentFetchedType fetchedType = isNewSearch ? ContentFetchedType.NewContent : ContentFetchedType.UpdatedContent;
-                this.ContentFetched(result.SearchData, fetchedType);
+                this.ContentFetched(result.SearchData);
             }
 
             this.previousSearchResult = result;
@@ -89,6 +95,10 @@ public class SearchAPIComponent : ContentUpdater, IContentFetcher {
     }
 
     public override void UpdateContent() {
+        if (this.isFetchingInProgress) {
+            return;
+        }
+
         if (this.queryString.Equals(string.Empty)) {
             return;
         }
