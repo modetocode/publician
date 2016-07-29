@@ -35,10 +35,7 @@ public class SimplePool<ObjectType> where ObjectType : class {
     }
 
     public void Release(ObjectType objectToRelease) {
-        if (objectToRelease == null) {
-            throw new ArgumentNullException("objectToRelease");
-        }
-
+        Assert.IsNotNull(objectToRelease);
         this.objectPoolStack.Push(objectToRelease);
     }
 
