@@ -5,6 +5,7 @@ to open the contents as a project in Unity.
 
 This is a demo application that was developed for a very short time. All feedback is welcome.
 
+[Download the APK](https://www.dropbox.com/s/cgcsxskbd0wbg2f/publician.apk?dl=0)
 ## 1. Project description
 
 **Publician** is an application that provides searching possibilities on the [Yle api](http://developer.yle.fi/index.en.html).
